@@ -7,9 +7,8 @@
 
 unsigned long sdbm(char *keyword);
 
-typedef struct hashMap_s{
-    const uint8_t opcodes[OPCODES_NUM];
-
+typedef struct hashMap {
+	const uint8_t opcodes[OPCODES_NUM];
 } hashMap;
 
 #endif

@@ -12,9 +12,9 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	char line[BUF_SIZE];
+	// char line[BUF_SIZE];
 	// Open file
-	char opcode[KEYWORD_SIZE];
+	// char opcode[KEYWORD_SIZE];
 	// char reg1[KEYWORD_SIZE];
 	// char reg2[KEYWORD_SIZE];
 	// char reg3[KEYWORD_SIZE];
@@ -29,9 +29,11 @@ int main(int argc, char **argv) {
 		printf("Error: unknown file\n");
 		return -1;
 	}
-    instruction_t instructions[OPCODES_NUM];
-    build_instructions("../test/opcode_definition.s", instructions, OPCODES_NUM);
-    /*
+
+	instruction_t instructions[OPCODES_NUM];
+	build_instructions("../test/opcode_definition.s", instructions, OPCODES_NUM);
+
+	/*
 	while (fgets(line, sizeof(line), f)) {
 		sscanf(line, "%s\n", opcode);
 		opcodes[sdbm(opcode) % (OPCODES_NUM)]++;
@@ -39,13 +41,14 @@ int main(int argc, char **argv) {
 
 	for (int i = 0; i < OPCODES_NUM; i++) {
 		if(opcodes[i] > 1){
-            printf("Multiple occurrencies at: %d\n", opcodes[i]);
-        }
+			printf("Multiple occurrencies at: %d\n", opcodes[i]);
+		}
 	}
 	// Read each line
 	// Parse each line
 	// Write output file
-    */
+	*/
+
 	fclose(f);
 
 	return EXIT_SUCCESS;
