@@ -1,5 +1,5 @@
 project(
-    'SemiTOV-Assembler',
+    'SemiTOV-assembler',
     'c',
     version: '0.1',
 )
