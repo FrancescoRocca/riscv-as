@@ -1,4 +1,4 @@
-#include "opcodes.h"
+#include "instruction.h"
 
 static uint8_t format_binary(char *s, size_t bits) {
 	uint8_t binValue = 0;
@@ -9,7 +9,7 @@ static uint8_t format_binary(char *s, size_t bits) {
 	return binValue;
 }
 
-int build_instructions(const char *filename, instruction_t *instructions, size_t num) {
+int build_instructions(const char *filename, instruction_s *instructions, size_t num) {
 	FILE *opcodeFile = fopen(filename, "r");
 
 	if (opcodeFile == NULL) {
