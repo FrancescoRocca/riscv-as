@@ -1,8 +1,7 @@
 #include "hash.h"
 
 /* Simple hash sdbm function implementation */
-/* Implementation from gawk, not our copyright.*/
-
+/* Implementation from gawk, not our copyright. */
 unsigned long sdbm(char *keyword) {
 	unsigned long hash = 0;
 	int c;
