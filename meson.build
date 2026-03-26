@@ -7,6 +7,7 @@ project(
 
 sources = []
 subdir('src')
+subdir('gperf')
 
 inc = include_directories('include')
 
