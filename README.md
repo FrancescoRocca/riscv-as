@@ -12,4 +12,4 @@ $ meson compile
 
 ### Definitions schema
 
-Where you find 0xFF it means that it doesn't have a func7 field.
+Where you find `0xFF` it means that it doesn't have a `func7` field.

@@ -1,4 +1,6 @@
 #include "instruction.h"
+#include "common.h"
+#include "hash.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -15,7 +17,7 @@ static uint8_t format_binary(char *s, size_t bits) {
 	return binValue;
 }
 
-int load_instructions(const char *filename, instruction_s *instructions) {
+int load_instructions(const char *filename, hashmap_s *hashmap) {
 	FILE *fp = fopen(filename, "r");
 
 	if (!fp) {
@@ -25,10 +27,18 @@ int load_instructions(const char *filename, instruction_s *instructions) {
 
 	char name[INSTRUCTION_NAME_MAX];
 	char opcode[OPCODE_MAX];
-	uint8_t func3, func7;
 
-	while ((fscanf(fp, " %s %s %hhx %hhx ", name, opcode, &func3, &func7) != EOF)) {
-		fprintf(stdout, "[debug] %s %02x %02x %02x\n", name, format_binary(opcode, OPCODE_MAX), func3, func7);
+	instruction_s instruction = {0};
+	while ((fscanf(fp, " %s %s %hhx %hhx ", name, opcode, &instruction.funct3, &instruction.funct7) != EOF)) {
+		instruction.opcode = format_binary(opcode, OPCODE_MAX);
+		// fprintf(stdout, "[debug] %s %02x %02x %02x\n", name, format_binary(opcode, OPCODE_MAX), instruction.funct3,
+		// instruction.funct7);
+
+		/* Insert the new pair into hashmap */
+		int ret = hm_set(hashmap, name, instruction);
+		if (ret != 0) {
+			return EXIT_FAILURE;
+		}
 	}
 
 	fclose(fp);
