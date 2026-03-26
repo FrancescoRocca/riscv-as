@@ -1,5 +1,11 @@
 #include "instruction.h"
 
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define OPCODE_MAX 8
+
 static uint8_t format_binary(char *s, size_t bits) {
 	uint8_t binValue = 0;
 	for (int i = 0; i < bits; i++) {
@@ -9,31 +15,23 @@ static uint8_t format_binary(char *s, size_t bits) {
 	return binValue;
 }
 
-int build_instructions(const char *filename, instruction_s *instructions, size_t num) {
-	FILE *opcodeFile = fopen(filename, "r");
+int load_instructions(const char *filename, instruction_s *instructions) {
+	FILE *fp = fopen(filename, "r");
 
-	if (opcodeFile == NULL) {
-		printf("Error: unknown file\n");
-		return -1;
+	if (!fp) {
+		fprintf(stderr, "Unable to open file: %s\n", filename);
+		return EXIT_FAILURE;
 	}
 
-	char line[64];
-	char t1[8], t2[8], t3[8];
-	for (int i = 0; i < OPCODES_NUM; i++) {
-		if (!fgets(line, sizeof(line), opcodeFile)) {
-			printf("Error: reached EOF\n");
-			return -1;
-		}
-		sscanf(line, "%s %7[01] %3[01] %7[01]\n", instructions[i].name, t1, t2, t3);
-		instructions[i].opcode = format_binary(t1, 7);
-		instructions[i].funct3 = format_binary(t2, 3);
-		instructions[i].funct7 = format_binary(t3, 7);
+	char name[INSTRUCTION_NAME_MAX];
+	char opcode[OPCODE_MAX];
+	uint8_t func3, func7;
 
-		printf("Opcode: %s\t%x\t%x\t%x\n", instructions[i].name, instructions[i].opcode, instructions[i].funct3,
-			   instructions[i].funct7);
+	while ((fscanf(fp, " %s %s %hhx %hhx ", name, opcode, &func3, &func7) != EOF)) {
+		fprintf(stdout, "[debug] %s %02x %02x %02x\n", name, format_binary(opcode, OPCODE_MAX), func3, func7);
 	}
 
-	fclose(opcodeFile);
+	fclose(fp);
 
-	return 0;
+	return EXIT_SUCCESS;
 }

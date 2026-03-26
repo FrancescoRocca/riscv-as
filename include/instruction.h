@@ -3,18 +3,18 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
-#define OPCODES_NUM 40
+#define INSTRUCTIONS_COUNT 40
+#define INSTRUCTION_NAME_MAX 8
 
 typedef struct instruction {
-	char name[8];
+	char name[INSTRUCTION_NAME_MAX];
 	uint8_t opcode;
 	uint8_t funct3;
 	uint8_t funct7;
 } instruction_s;
 
 /* Must be called before using the assembler */
-int build_instructions(const char *filename, instruction_s *instructions, size_t num);
+int load_instructions(const char *filename, instruction_s *instructions);
 
 #endif

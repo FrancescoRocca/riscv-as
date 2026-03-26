@@ -1,4 +1,5 @@
 #include "argparser.h"
+
 #include <argp.h>
 #include <stdlib.h>
 
@@ -39,7 +40,6 @@ arguments_s *argparse(int argc, char **argv) {
 	}
 
 	/* Default values */
-	/* Find "definitions.schema" inside the assets folder */
 	arguments->definitions_schema = "assets/definitions.schema";
 	arguments->file = "test/base.s";
 

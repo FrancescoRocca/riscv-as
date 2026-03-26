@@ -1,4 +1,5 @@
 #include "argparser.h"
+#include "instruction.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -12,14 +13,16 @@ int main(int argc, char **argv) {
 
 	fprintf(stdout, "[info] loading definitions schema from %s ...\n", arguments->definitions_schema);
 	fprintf(stdout, "[info] compiling %s ...\n", arguments->file);
+
 	FILE *fp = fopen(arguments->file, "r");
 	if (fp == NULL) {
 		printf("Error: unknown file\n");
 		return -1;
 	}
 
-	// instruction_t instructions[OPCODES_NUM];
-	// build_instructions(argv[1], instructions, OPCODES_NUM);
+	/* Load definitions into instructions struct */
+	instruction_s instructions[INSTRUCTIONS_COUNT];
+	load_instructions(arguments->definitions_schema, instructions);
 
 	fclose(fp);
 
