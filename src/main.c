@@ -1,17 +1,18 @@
+#include "argparser.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BUF_SIZE 256
-#define KEYWORD_SIZE 6
-
 int main(int argc, char **argv) {
-	if (argc != 2) {
-		fprintf(stdout, "Usage: %s <FILE.s>\n", argv[0]);
-		exit(EXIT_FAILURE);
+	arguments_s *arguments = argparse(argc, argv);
+	if (!arguments) {
+		return EXIT_FAILURE;
 	}
 
-	FILE *fp = fopen(argv[1], "r");
+	fprintf(stdout, "[info] loading definitions schema from %s ...\n", arguments->definitions_schema);
+	fprintf(stdout, "[info] compiling %s ...\n", arguments->file);
+	FILE *fp = fopen(arguments->file, "r");
 	if (fp == NULL) {
 		printf("Error: unknown file\n");
 		return -1;
@@ -21,6 +22,8 @@ int main(int argc, char **argv) {
 	// build_instructions(argv[1], instructions, OPCODES_NUM);
 
 	fclose(fp);
+
+	argparse_free(arguments);
 
 	return EXIT_SUCCESS;
 }

@@ -1,4 +1,5 @@
 sources += files(
-    'opcodes.c',
+    'argparser.c',
+    'instruction.c',
     'main.c',
 )
