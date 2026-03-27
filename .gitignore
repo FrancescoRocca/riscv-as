@@ -1,6 +1,6 @@
 .cache/
 build/
-
+gperf/hash_utils.c
 # Prerequisites
 *.d
 

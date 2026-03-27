@@ -1,4 +1,9 @@
+%{
+#include "hash.h"
+%}
+
 struct instruction;
+
 %%
 add, 0110011, 0x0, 0x00, 'R'
 sub, 0110011, 0x0, 0x20, 'R'
