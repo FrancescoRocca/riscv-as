@@ -5,8 +5,7 @@
  * @brief Holds the parsed CLI arguments for the assembler.
  */
 typedef struct arguments {
-	char *definitions_schema; /**< Path to the definitions schema file */
-	char *file;				  /**< Path to the source file to assemble */
+	char *file; /**< Path to the source file to assemble */
 } arguments_s;
 
 /**
