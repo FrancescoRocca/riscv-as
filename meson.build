@@ -6,30 +6,32 @@ project(
 )
 
 gperf = find_program('gperf', required: false)
-
 if gperf.found()
     run_target(
         'gperf',
         command: [
             gperf,
+            '-o',
             '-t',
+            '-I',
             '-C',
-            '--output-file=' + join_paths(meson.current_source_dir(), 'gperf/hash_utils.c'),
-            join_paths(meson.current_source_dir(), 'gperf/test.gperf'),
+            '--output-file='
+            + join_paths(meson.current_source_dir(), 'gperf/hash.c'),
+            join_paths(meson.current_source_dir(), 'gperf/instructions.gperf'),
         ],
     )
 endif
-
 
 sources = []
 subdir('src')
 subdir('gperf')
 
 inc = include_directories('include')
-
+gperf_inc = include_directories('gperf')
+incdirs = [inc, gperf_inc]
 
 executable(
     'assembler',
     sources,
-    include_directories: inc,
+    include_directories: incdirs,
 )

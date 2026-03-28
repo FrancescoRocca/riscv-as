@@ -1,17 +1,21 @@
 #ifndef ASSEMBLER_INSTRUCTION_H
 #define ASSEMBLER_INSTRUCTION_H
 
-#include "hash.h"
+#include <stdint.h>
+
+typedef struct instruction {
+	char *name;
+	uint8_t opcode;
+	uint8_t funct3;
+	uint8_t funct7;
+	char type;
+} instruction_s;
 
 /**
- * @brief Loads the instruction into the hashmap.
+ * @brief Assemble the file.
  *
- * @param filename The definitions schema file path.
- * @param hashamp The hashmap.
- *
- * @note Must be called before using the assembler.
+ * @param filename File to assemble.
  */
-// int load_instructions(const char *filename, hashmap_s *hashmap);
 int assemble_file(const char *filename);
 
 #endif
