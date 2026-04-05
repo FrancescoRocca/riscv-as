@@ -33,7 +33,7 @@ static uint8_t get_register(char *reg) {
 			if (reg[1] == 'p') {
 				regValue = 0x4;
 			} else {
-				uint8_t t = 0x0;
+				uint8_t t = reg[1] - '0';
 				/* t0-2 -> x5-7 */
 				/* t3-6 -> x28-31 */
 				regValue = t < 3 ? t + 5 : t + 25;
@@ -64,6 +64,7 @@ int assemble_file(const char *filename) {
 	char rd[REGISTER_LEN], rs1[REGISTER_LEN], rs2[REGISTER_LEN];
 	uint16_t imm, imm2;
 	uint32_t imm32;
+	uint32_t res = 0x0;
 	const instruction_s *instr;
 
 	while ((fscanf(fp, " %s ", name) != EOF)) {
@@ -79,26 +80,55 @@ int assemble_file(const char *filename) {
 			case R_TYPE:
 				fscanf(fp, " %3[^,], %3[^,], %3[^,\n] ", rd, rs1, rs2);
 				printf("R-Type Read: %s %s %s\n", rd, rs1, rs2);
+				res = (instr->funct7 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) |
+					  (instr->funct3 << 12) | (get_register(rd) << 7) | instr->opcode;
+				printf("Write: %08x\n", res);
+				// printf("Write: %02x %02x %02x %02x %02x %02x \n", instr->funct7, get_register(rs2),
+				// get_register(rs1), 	   instr->funct3, 	   get_register(rd), instr->opcode);
 				break;
 			case I_TYPE:
 				fscanf(fp, " %3[^,], %3[^,], %hu[^\n] ", rd, rs1, &imm);
 				printf("I-Type Read: %s, %s, %hu\n", rd, rs1, imm);
+				res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) |
+					  instr->opcode;
+				printf("Write: %08x\n", res);
+				// printf("Write: %02x %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
+				//	   get_register(rd), get_register(rs1), imm);
 				break;
 			case S_TYPE:
 				fscanf(fp, " %hu, %3[^,], %3[^,], %hu[^\n] ", &imm, rs1, rs2, &imm2);
 				printf("S-Type Read: %hu, %s, %s, %hu\n", imm, rd, rs1, imm2);
+				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
+					  (imm << 7) | instr->opcode;
+				printf("Write: %08x\n", res);
+				//	   printf("Write: %02x %02x %02x %02x %02x %02x %02x \n", instr->opcode, instr->funct3,
+				//instr->funct7, imm, 	   get_register(rd), get_register(rs1), imm2);
 				break;
 			case B_TYPE:
 				fscanf(fp, " %hu, %3[^,], %3[^,], %hu[^\n] ", &imm, rs1, rs2, &imm2);
 				printf("B-Type Read: %hu, %s, %s, %hu\n", imm, rd, rs1, imm2);
+				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
+					  (imm << 7) | instr->opcode;
+				printf("Write: %08x\n", res);
+				// printf("Write: %02x %02x %02x %02x %02x %02x %02x \n", instr->opcode, instr->funct3, instr->funct7,
+				// imm, 	   get_register(rd), get_register(rs1), imm2);
 				break;
 			case U_TYPE:
 				fscanf(fp, " %3[^,], %u[^\n] ", rd, &imm32);
 				printf("U-Type Read: %s, %u\n", rd, imm32);
+				res = (imm32 << 12) | (get_register(rd) << 7) | instr->opcode;
+				printf("Write: %08x\n", res);
+				// printf("Write: %02x %02x %02x %02x %02x", instr->opcode, instr->funct3, instr->funct7,
+				// get_register(rd), 	   imm32);
 				break;
 			case J_TYPE:
 				fscanf(fp, " %3[^,], %u[^\n] ", rd, &imm32);
 				printf("J-Type Read: %s, %u\n", rd, imm32);
+				// TODO Write correctly imm bytes order
+				res = (imm << 12) | (get_register(rd) << 7) | instr->opcode;
+				printf("Write: %08x\n", res);
+				printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
+					   get_register(rd), imm32);
 				break;
 			default:
 				break;
