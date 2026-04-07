@@ -6,28 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LOAD_STORE_MAX 4
-
 /* Return 1 (true) if the opcode is a load/store one */
-static int is_load_store(char *buf) {
-    if( ! strncmp("lb",buf, LOAD_STORE_MAX) )
-        return 1;
-	else if (!strncmp("lh", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("lw", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("lbu", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("lhu", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("sb", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("sh", buf, LOAD_STORE_MAX))
-        return 1;
-	else if (!strncmp("sw", buf, LOAD_STORE_MAX))
-        return 1;
+static int is_load_store(const char *op) {
+	if (!op) {
+		return 0;
+	}
 
-    return 0;
+	return strcmp(op, "lb") == 0 || strcmp(op, "lh") == 0 || strcmp(op, "lw") == 0 || strcmp(op, "lbu") == 0 ||
+		   strcmp(op, "lhu") == 0 || strcmp(op, "sb") == 0 || strcmp(op, "sh") == 0 || strcmp(op, "sw") == 0;
 }
 
 static uint8_t get_register(char *reg) {
@@ -90,10 +76,10 @@ int assemble_file(const char *filename) {
 	int32_t imm32;
 	int32_t res = 0x0;
 	const instruction_s *instr;
-    char lineBuf[512];
+	char lineBuf[512];
 	// while ((fscanf(fp, " %s ", name) != EOF)) {
-	while ( (fgets(lineBuf, 512 , fp)) ) {
-        sscanf(lineBuf, " %s ", name);
+	while ((fgets(lineBuf, 512, fp))) {
+		sscanf(lineBuf, " %s ", name);
 		instr = find_instruction(name, strlen(name));
 		if (instr == NULL) {
 			fprintf(stderr, "[error] unknown instruction:\n%s\n", name);
@@ -113,45 +99,46 @@ int assemble_file(const char *filename) {
 				// get_register(rs1), 	   instr->funct3, 	   get_register(rd), instr->opcode);
 				break;
 			case I_TYPE:
-                /* Load opcodes have a specific syntax opcode, reg, offset(reg) */
+				/* Load opcodes have a specific syntax opcode, reg, offset(reg) */
 				if (is_load_store(name)) {
 
 					size_t res = sscanf(lineBuf, "%*s %3[^,], %hi(%3[^)])", rd, &imm, rs1);
-                    /* Probably an implicit zero offset immediate */
+					/* Probably an implicit zero offset immediate */
 					if (res < 3) {
-                        sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
-                        imm = 0x0; // Still needed this immediate
+						sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
+						imm = 0x0; // Still needed this immediate
 					}
-				}
-				else
+				} else {
 					sscanf(lineBuf, "%*s %3[^,], %3[^,], %hi[^#\n] ", rd, rs1, &imm);
+				}
 
 				printf("I-Type Read: %s, %s, %hi\n", rd, rs1, imm);
-                res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) | instr->opcode;
-                printf("Write: %08x\n", res);
+				res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) |
+					  instr->opcode;
+				printf("Write: %08x\n", res);
 				// printf("Write: %02x %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
 				//	   get_register(rd), get_register(rs1), imm);
-                break;
+				break;
 
 			case S_TYPE:
-                /* Store opcodes have a specific syntax opcode, src, offset(dest) */
+				/* Store opcodes have a specific syntax opcode, src, offset(dest) */
 				if (is_load_store(name)) {
 					size_t res = sscanf(lineBuf, "%*s %3[^,], %hi(%3[^)])", rs1, &imm, rd);
-                    /* Probably an implicit zero offset immediate */
+					/* Probably an implicit zero offset immediate */
 					if (res < 3) {
-                        sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
-                        imm = 0x0;
+						sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
+						imm = 0x0;
 					}
+				} else {
+					sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
 				}
-				else
-                    sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
 
 				printf("S-Type Read: %hi, %s, %s, %hi\n", imm, rd, rs1, imm2);
 				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
 					  (imm << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
 				//	   printf("Write: %02x %02x %02x %02x %02x %02x %02x \n", instr->opcode, instr->funct3,
-				//instr->funct7, imm, 	   get_register(rd), get_register(rs1), imm2);
+				// instr->funct7, imm, 	   get_register(rd), get_register(rs1), imm2);
 				break;
 			case B_TYPE:
 				sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
@@ -176,7 +163,7 @@ int assemble_file(const char *filename) {
 				// TODO Write correctly imm bytes order
 				res = (imm << 12) | (get_register(rd) << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
-				//printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
+				// printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
 				//	   get_register(rd), imm32);
 				break;
 			default:
