@@ -6,6 +6,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LOAD_STORE_MAX 4
+
+/* Return 1 (true) if the opcode is a load/store one */
+static int is_load_store(char *buf) {
+    if( ! strncmp("lb",buf, LOAD_STORE_MAX) )
+        return 1;
+	else if (!strncmp("lh", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("lw", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("lbu", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("lhu", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("sb", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("sh", buf, LOAD_STORE_MAX))
+        return 1;
+	else if (!strncmp("sw", buf, LOAD_STORE_MAX))
+        return 1;
+
+    return 0;
+}
+
 static uint8_t get_register(char *reg) {
 	uint8_t regValue = 0x0;
 
@@ -62,12 +86,14 @@ int assemble_file(const char *filename) {
 
 	char name[NAME_LEN];
 	char rd[REGISTER_LEN], rs1[REGISTER_LEN], rs2[REGISTER_LEN];
-	uint16_t imm, imm2;
-	uint32_t imm32;
-	uint32_t res = 0x0;
+	int16_t imm, imm2;
+	int32_t imm32;
+	int32_t res = 0x0;
 	const instruction_s *instr;
-
-	while ((fscanf(fp, " %s ", name) != EOF)) {
+    char lineBuf[512];
+	// while ((fscanf(fp, " %s ", name) != EOF)) {
+	while ( (fgets(lineBuf, 512 , fp)) ) {
+        sscanf(lineBuf, " %s ", name);
 		instr = find_instruction(name, strlen(name));
 		if (instr == NULL) {
 			fprintf(stderr, "[error] unknown instruction:\n%s\n", name);
@@ -78,7 +104,7 @@ int assemble_file(const char *filename) {
 
 		switch (instr->type) {
 			case R_TYPE:
-				fscanf(fp, " %3[^,], %3[^,], %3[^,\n] ", rd, rs1, rs2);
+				sscanf(lineBuf, "%*s %3[^,], %3[^,], %3[^#\n]", rd, rs1, rs2);
 				printf("R-Type Read: %s %s %s\n", rd, rs1, rs2);
 				res = (instr->funct7 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) |
 					  (instr->funct3 << 12) | (get_register(rd) << 7) | instr->opcode;
@@ -87,17 +113,40 @@ int assemble_file(const char *filename) {
 				// get_register(rs1), 	   instr->funct3, 	   get_register(rd), instr->opcode);
 				break;
 			case I_TYPE:
-				fscanf(fp, " %3[^,], %3[^,], %hu[^\n] ", rd, rs1, &imm);
-				printf("I-Type Read: %s, %s, %hu\n", rd, rs1, imm);
-				res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) |
-					  instr->opcode;
-				printf("Write: %08x\n", res);
+                /* Load opcodes have a specific syntax opcode, reg, offset(reg) */
+				if (is_load_store(name)) {
+
+					size_t res = sscanf(lineBuf, "%*s %3[^,], %hi(%3[^)])", rd, &imm, rs1);
+                    /* Probably an implicit zero offset immediate */
+					if (res < 3) {
+                        sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
+                        imm = 0x0; // Still needed this immediate
+					}
+				}
+				else
+					sscanf(lineBuf, "%*s %3[^,], %3[^,], %hi[^#\n] ", rd, rs1, &imm);
+
+				printf("I-Type Read: %s, %s, %hi\n", rd, rs1, imm);
+                res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) | instr->opcode;
+                printf("Write: %08x\n", res);
 				// printf("Write: %02x %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
 				//	   get_register(rd), get_register(rs1), imm);
-				break;
+                break;
+
 			case S_TYPE:
-				fscanf(fp, " %hu, %3[^,], %3[^,], %hu[^\n] ", &imm, rs1, rs2, &imm2);
-				printf("S-Type Read: %hu, %s, %s, %hu\n", imm, rd, rs1, imm2);
+                /* Store opcodes have a specific syntax opcode, src, offset(dest) */
+				if (is_load_store(name)) {
+					size_t res = sscanf(lineBuf, "%*s %3[^,], %hi(%3[^)])", rs1, &imm, rd);
+                    /* Probably an implicit zero offset immediate */
+					if (res < 3) {
+                        sscanf(lineBuf, "%*s, %3[^,], %3[^\n#]", rd, rs1);
+                        imm = 0x0;
+					}
+				}
+				else
+                    sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
+
+				printf("S-Type Read: %hi, %s, %s, %hi\n", imm, rd, rs1, imm2);
 				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
 					  (imm << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
@@ -105,8 +154,8 @@ int assemble_file(const char *filename) {
 				//instr->funct7, imm, 	   get_register(rd), get_register(rs1), imm2);
 				break;
 			case B_TYPE:
-				fscanf(fp, " %hu, %3[^,], %3[^,], %hu[^\n] ", &imm, rs1, rs2, &imm2);
-				printf("B-Type Read: %hu, %s, %s, %hu\n", imm, rd, rs1, imm2);
+				sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
+				printf("B-Type Read: %hi, %s, %s, %hi\n", imm, rd, rs1, imm2);
 				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
 					  (imm << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
@@ -114,21 +163,21 @@ int assemble_file(const char *filename) {
 				// imm, 	   get_register(rd), get_register(rs1), imm2);
 				break;
 			case U_TYPE:
-				fscanf(fp, " %3[^,], %u[^\n] ", rd, &imm32);
-				printf("U-Type Read: %s, %u\n", rd, imm32);
+				sscanf(lineBuf, "%*s %3[^,], %i[^#\n] ", rd, &imm32);
+				printf("U-Type Read: %s, %i\n", rd, imm32);
 				res = (imm32 << 12) | (get_register(rd) << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
 				// printf("Write: %02x %02x %02x %02x %02x", instr->opcode, instr->funct3, instr->funct7,
 				// get_register(rd), 	   imm32);
 				break;
 			case J_TYPE:
-				fscanf(fp, " %3[^,], %u[^\n] ", rd, &imm32);
-				printf("J-Type Read: %s, %u\n", rd, imm32);
+				sscanf(lineBuf, "%*s %3[^,], %i[^#\n] ", rd, &imm32);
+				printf("J-Type Read: %s, %i\n", rd, imm32);
 				// TODO Write correctly imm bytes order
 				res = (imm << 12) | (get_register(rd) << 7) | instr->opcode;
 				printf("Write: %08x\n", res);
-				printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
-					   get_register(rd), imm32);
+				//printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
+				//	   get_register(rd), imm32);
 				break;
 			default:
 				break;

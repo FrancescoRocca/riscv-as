@@ -1,4 +1,4 @@
-add x3, x1, x2
+add x3, x1, x2 #Test comment
 sub x4, x1, x2
 
 sll x5, x1, x2
