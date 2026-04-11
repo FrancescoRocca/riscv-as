@@ -22,6 +22,8 @@ if gperf.found()
     )
 endif
 
+add_global_arguments('-DEVELOPER', language: 'c')
+
 sources = []
 subdir('src')
 subdir('gperf')
