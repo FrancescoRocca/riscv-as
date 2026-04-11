@@ -1,5 +1,6 @@
 #include "instruction.h"
 
+#include "debug.h"
 #include "hash.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -82,21 +83,19 @@ int assemble_file(const char *filename) {
 		sscanf(lineBuf, " %s ", name);
 		instr = find_instruction(name, strlen(name));
 		if (instr == NULL) {
-			fprintf(stderr, "[error] unknown instruction:\n%s\n", name);
+			log_msg(LOG_ERROR, "[error] unknown instruction:\n%s", name);
 			break;
 		}
 
-		fprintf(stdout, "[info] fetching instruction: %s (%c TYPE)\n", name, instr->type);
+		log_msg(LOG_INFO, "fetching instruction: %s (%c TYPE)", name, instr->type);
 
 		switch (instr->type) {
 			case R_TYPE:
 				sscanf(lineBuf, "%*s %3[^,], %3[^,], %3[^#\n]", rd, rs1, rs2);
-				printf("R-Type Read: %s %s %s\n", rd, rs1, rs2);
+				log_msg(LOG_DEBUG, "R-Type Read: %s %s %s", rd, rs1, rs2);
 				res = (instr->funct7 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) |
 					  (instr->funct3 << 12) | (get_register(rd) << 7) | instr->opcode;
-				printf("Write: %08x\n", res);
-				// printf("Write: %02x %02x %02x %02x %02x %02x \n", instr->funct7, get_register(rs2),
-				// get_register(rs1), 	   instr->funct3, 	   get_register(rd), instr->opcode);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 			case I_TYPE:
 				/* Load opcodes have a specific syntax opcode, reg, offset(reg) */
@@ -112,12 +111,10 @@ int assemble_file(const char *filename) {
 					sscanf(lineBuf, "%*s %3[^,], %3[^,], %hi[^#\n] ", rd, rs1, &imm);
 				}
 
-				printf("I-Type Read: %s, %s, %hi\n", rd, rs1, imm);
+				log_msg(LOG_DEBUG, "I-Type Read: %s, %s, %hi", rd, rs1, imm);
 				res = imm << 20 | (get_register(rs1) << 15) | (instr->funct3 << 12) | (get_register(rd) << 7) |
 					  instr->opcode;
-				printf("Write: %08x\n", res);
-				// printf("Write: %02x %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
-				//	   get_register(rd), get_register(rs1), imm);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 
 			case S_TYPE:
@@ -133,38 +130,30 @@ int assemble_file(const char *filename) {
 					sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
 				}
 
-				printf("S-Type Read: %hi, %s, %s, %hi\n", imm, rd, rs1, imm2);
+				log_msg(LOG_DEBUG, "S-Type Read: %hi, %s, %s, %hi", imm, rd, rs1, imm2);
 				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
 					  (imm << 7) | instr->opcode;
-				printf("Write: %08x\n", res);
-				//	   printf("Write: %02x %02x %02x %02x %02x %02x %02x \n", instr->opcode, instr->funct3,
-				// instr->funct7, imm, 	   get_register(rd), get_register(rs1), imm2);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 			case B_TYPE:
 				sscanf(lineBuf, "%*s %hi, %3[^,], %3[^,], %hi[^#\n] ", &imm, rs1, rs2, &imm2);
-				printf("B-Type Read: %hi, %s, %s, %hi\n", imm, rd, rs1, imm2);
+				log_msg(LOG_DEBUG, "B-Type Read: %hi, %s, %s, %hi", imm, rd, rs1, imm2);
 				res = (imm2 << 25) | (get_register(rs2) << 20) | (get_register(rs1) << 15) | (instr->funct3 << 12) |
 					  (imm << 7) | instr->opcode;
-				printf("Write: %08x\n", res);
-				// printf("Write: %02x %02x %02x %02x %02x %02x %02x \n", instr->opcode, instr->funct3, instr->funct7,
-				// imm, 	   get_register(rd), get_register(rs1), imm2);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 			case U_TYPE:
 				sscanf(lineBuf, "%*s %3[^,], %i[^#\n] ", rd, &imm32);
-				printf("U-Type Read: %s, %i\n", rd, imm32);
+				log_msg(LOG_DEBUG, "U-Type Read: %s, %i", rd, imm32);
 				res = (imm32 << 12) | (get_register(rd) << 7) | instr->opcode;
-				printf("Write: %08x\n", res);
-				// printf("Write: %02x %02x %02x %02x %02x", instr->opcode, instr->funct3, instr->funct7,
-				// get_register(rd), 	   imm32);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 			case J_TYPE:
 				sscanf(lineBuf, "%*s %3[^,], %i[^#\n] ", rd, &imm32);
-				printf("J-Type Read: %s, %i\n", rd, imm32);
+				log_msg(LOG_DEBUG, "J-Type Read: %s, %i", rd, imm32);
 				// TODO Write correctly imm bytes order
 				res = (imm << 12) | (get_register(rd) << 7) | instr->opcode;
-				printf("Write: %08x\n", res);
-				// printf("Write: %02x %02x %02x %02x %02x\n", instr->opcode, instr->funct3, instr->funct7,
-				//	   get_register(rd), imm32);
+				log_msg(LOG_DEBUG, "Write: %08x", res);
 				break;
 			default:
 				break;

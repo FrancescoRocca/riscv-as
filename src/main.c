@@ -1,8 +1,8 @@
 #include "argparser.h"
+#include "debug.h"
 #include "instruction.h"
 
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stdout, "[info] compiling %s ...\n", arguments->file);
+	log_msg(LOG_INFO, "compiling %s ...", arguments->file);
 
 	ret = assemble_file(arguments->file);
 	if (ret != EXIT_SUCCESS) {
