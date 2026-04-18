@@ -3,9 +3,13 @@
 #include <stdio.h>
 
 static void log_info(const char *fmt, va_list args) {
-	fprintf(stdout, "[INFO] ");
+    (void) fmt;
+    (void) args;
+#ifdef LOG
+    fprintf(stdout, "[INFO] ");
 	vfprintf(stdout, fmt, args);
 	fprintf(stdout, "\n");
+#endif
 }
 
 static void log_debug(const char *file, int line, const char *fmt, va_list args) {
@@ -19,7 +23,6 @@ static void log_debug(const char *file, int line, const char *fmt, va_list args)
 	fprintf(stdout, "\n");
 #endif
 }
-
 static void log_error(const char *file, int line, const char *fmt, va_list args) {
 	fprintf(stderr, "[ERROR] [%s:%d] ", file, line);
 	vfprintf(stderr, fmt, args);
@@ -39,8 +42,6 @@ void _log_msg(log_type_e log_type, const char *file, int line, const char *fmt, 
 			break;
 		case LOG_ERROR:
 			log_error(file, line, fmt, args);
-			break;
 	}
-
 	va_end(args);
 }

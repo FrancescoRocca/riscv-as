@@ -1,5 +1,5 @@
-addi x1, x0, 10
-addi x2, x1, 5
+addi t1, t0, 10
+addi t2, t4, 5
 addi x3, x2, -20
 
 slti x4, x2, 20

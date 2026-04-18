@@ -1,7 +1,7 @@
 .cache/
 build/
 gperf/hash.c
-
+test/*.out
 # Prerequisites
 *.d
 
