@@ -37,6 +37,76 @@ static int is_load_store(const char *op) {
 		   strcmp(op, "lhu") == 0 || strcmp(op, "sb") == 0 || strcmp(op, "sh") == 0 || strcmp(op, "sw") == 0;
 }
 
+/**
+ * @return 1 if the instruction is a pseudo-instruction, 0 otherwise.
+ */
+static int is_pseudo_instr(const char *name) {
+	if (!name) {
+		return 0;
+	}
+
+	return strcmp(name, "li") == 0 || strcmp(name, "mv") == 0 ||
+		strcmp(name, "neg") == 0 || strcmp(name, "nop") == 0 ||
+			strcmp(name, "not") == 0 || strcmp(name, "seqz") == 0 ||
+				strcmp(name, "snez") == 0;
+}
+
+void expand_pseudo_instr(const instruction_s *instr, const char *lineBuf,
+						 const instruction_s **out_instructions,
+						 char out_lines[2][512]) {
+	char rd[REGISTER_LEN], rs1[REGISTER_LEN], rs2[REGISTER_LEN];
+	int32_t imm32=0x0;
+	if (strcmp(instr->name,"li") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %i[^#\n] ", rd, &imm32);
+		if (imm32 >= INT12_MIN && imm32 <= INT12_MAX) {
+			out_instructions[0] = find_instruction("addi", strlen("addi"));
+			snprintf(out_lines[0], 512, "addi %s, x0, %d\n", rd, imm32);
+		} else {
+			// TODO: add support for 32-bit immediate LI
+			log_msg(LOG_ERROR, "LI with imm greater than 12 bit to be implemented: %s", instr->name);
+			exit(EXIT_FAILURE);
+		}
+	} else if (strcmp(instr->name,"mv") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %3[^#\n]", rd, rs1);
+		/* mv is implemented with 'addi rs, r1, 0' */
+		out_instructions[0] = find_instruction("addi", strlen("addi"));
+		snprintf(out_lines[0], 512, "addi %s, %s, 0\n", rd, rs1);
+	} else if (strcmp(instr->name,"neg") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %3[^#\n]", rd, rs1);
+		/* neg is implemented with 'sub rd, zero, rs1' */
+		out_instructions[0] = find_instruction("sub", strlen("sub"));
+		snprintf(out_lines[0], 512, "sub %s, x0, %s\n", rd, rs1);
+	} else if (strcmp(instr->name,"nop") == 0) {
+		/* nop is implemented with 'addi x0, x0, 0' */
+		out_instructions[0] = find_instruction("addi", strlen("addi"));
+		snprintf(out_lines[0], 512, "addi x0, x0, 0\n");
+	} else if (strcmp(instr->name,"not") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %3[^#\n]", rd, rs1);
+		/* not is implemented with 'xori rd, rs1, -1' */
+		out_instructions[0] = find_instruction("xori", strlen("xori"));
+		snprintf(out_lines[0], 512, "xori %s, %s, -1\n", rd, rs1);
+	} else if (strcmp(instr->name,"ret") == 0) {
+		log_msg(LOG_ERROR, "To be implemented pseudo-instruction: %s", instr->name);
+		exit(EXIT_FAILURE);
+		/* ret is implemented with 'jalr x0, x1, 0' */
+		out_instructions[0] = find_instruction("jalr", strlen("jalr"));
+		snprintf(out_lines[0], 512, "jalr x0, x1, 0\n");
+	} else if (strcmp(instr->name,"seqz") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %3[^#\n]", rd, rs1);
+		/* seqz is implemented with 'sltiu rd, rs1, 1' */
+		out_instructions[0] = find_instruction("sltiu", strlen("sltiu"));
+		snprintf(out_lines[0], 512, "sltiu %s, %s, 1\n", rd, rs1);
+	} else if (strcmp(instr->name,"snez") == 0) {
+		sscanf(lineBuf, "%*s %3[^,], %3[^#\n]", rd, rs2);
+		/* snez is implemented with 'sltu rd, x0, rs2' */
+		out_instructions[0] = find_instruction("sltu", strlen("sltu"));
+		snprintf(out_lines[0], 512, "sltu %s, x0, %s\n", rd, rs2);
+	} else {
+		log_msg(LOG_ERROR, "Unknown pseudo-instruction: %s", instr->name);
+		exit(EXIT_FAILURE);
+	}
+}
+
 static uint8_t get_register(char *reg) {
 	uint8_t regValue = 0x0;
 
@@ -169,17 +239,35 @@ int assemble_file(const char *filename) {
 		sscanf(lineBuf, " %s ", name);
 		instr = find_instruction(name, strlen(name));
 		if (instr == NULL) {
-			log_msg(LOG_ERROR, "[error] unknown instruction:\n%s", name);
+			log_msg(LOG_ERROR, "[error] unknown instruction: %s\n", name);
 			break;
 		}
 		if( !is_only_ws(lineBuf) ){
-		    log_msg(LOG_INFO, "fetching instruction: %s (%c TYPE)", name, instr->type);
-			res = get_opcode(instr, lineBuf, name);
-			printf("%02lx:\t%08x\t%s", counter, res, lineBuf);
-			counter += 4;
+			if (is_pseudo_instr(name)) {
+				log_msg(LOG_INFO, "expanding pseudo-instruction: %s", name);
+				/* In RV32I some pseudo-instructions could require two actual
+				   instructions to be correctly executed */
+				const instruction_s *pseudo_expansion[2] = {NULL, NULL};
+				char expanded_lines[2][512] = {0};
+				expand_pseudo_instr(instr, lineBuf, pseudo_expansion, expanded_lines);
+				for (int i = 0; i < 2 && pseudo_expansion[i] != NULL; i++) {
+					res = get_opcode(pseudo_expansion[i], expanded_lines[i], pseudo_expansion[i]->name);
+					printf("%02lx:\t%08x\t%s", counter, res, expanded_lines[i]);
+					counter += 4;
+				}
+			} else {
+			    log_msg(LOG_INFO, "fetching instruction: %s (%c TYPE)", name, instr->type);
+				res = get_opcode(instr, lineBuf, name);
+				printf("%02lx:\t%08x\t%s", counter, res, lineBuf);
+				counter += 4;
+			}
 		}
 	}
 	fclose(fp);
 
 	return EXIT_SUCCESS;
 }
+
+
+// TODO: bug in get_opcode for sltiu; zero (mnemonic for x0) causes bugs in
+//  get_opcode, e.g. add tp, zero gp gets encoded as add tp, zero zero

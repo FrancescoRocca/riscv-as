@@ -6,6 +6,9 @@
 #define REGISTER_LEN 4
 #define NAME_LEN 64
 
+#define INT12_MAX ((1 << 11) - 1)
+#define INT12_MIN (-(1 << 11))
+
 #define R_TYPE 'R'
 #define I_TYPE 'I'
 #define S_TYPE 'S'
