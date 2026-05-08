@@ -5,6 +5,24 @@ project(
     default_options: ['warning_level=3', 'c_std=c11'],
 )
 
+sources = []
+headers = []
+subdir('include')
+subdir('src')
+subdir('gperf')
+
+#add_global_arguments('-DEVELOPER', language: 'c')
+
+inc = include_directories('include')
+gperf_inc = include_directories('gperf')
+incdirs = [inc, gperf_inc]
+
+executable(
+    'assembler',
+    sources,
+    include_directories: incdirs,
+)
+
 gperf = find_program('gperf', required: false)
 if gperf.found()
     run_target(
@@ -22,18 +40,7 @@ if gperf.found()
     )
 endif
 
-#add_global_arguments('-DEVELOPER', language: 'c')
-
-sources = []
-subdir('src')
-subdir('gperf')
-
-inc = include_directories('include')
-gperf_inc = include_directories('gperf')
-incdirs = [inc, gperf_inc]
-
-executable(
-    'assembler',
-    sources,
-    include_directories: incdirs,
-)
+clangformat = find_program('clang-format', required: false)
+if clangformat.found()
+    run_target('format', command: ['clang-format', '-i'] + sources)
+endif
