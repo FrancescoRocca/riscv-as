@@ -3,10 +3,10 @@
 #include <stdio.h>
 
 static void log_info(const char *fmt, va_list args) {
-    (void) fmt;
-    (void) args;
+	(void)fmt;
+	(void)args;
 #ifdef LOG
-    fprintf(stdout, "[INFO] ");
+	fprintf(stdout, "[INFO] ");
 	vfprintf(stdout, fmt, args);
 	fprintf(stdout, "\n");
 #endif
