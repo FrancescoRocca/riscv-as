@@ -127,6 +127,7 @@ void expand_pseudo_instr(const instruction_s *instr, const char *lineBuf, const 
 
 static uint8_t get_register(char *reg) {
 	uint8_t regValue = 0x0;
+	uint8_t a = 0x0;
 
 	switch (reg[0]) {
 		case 'x':
@@ -137,7 +138,6 @@ static uint8_t get_register(char *reg) {
 			}
 			break;
 		case 'a':
-			uint8_t a = 0x0;
 			sscanf(&reg[1], "%hhu", &a);
 			if (a > 7) {
 				log_msg(LOG_ERROR, "Invalid register: %s", reg);
