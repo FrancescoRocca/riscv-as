@@ -24,11 +24,10 @@ executable(
     include_directories: incdirs,
 )
 
-gperf = find_program('gperf', required: false)
+gperf = find_program('gperf', required: true)
 if gperf.found()
-    run_target(
-        'gperf',
-        command: [
+    run_command(
+        [
             gperf,
             '-o',
             '-t',
@@ -38,6 +37,7 @@ if gperf.found()
             + join_paths(meson.current_source_dir(), 'gperf/hash.c'),
             join_paths(meson.current_source_dir(), 'gperf/instructions.gperf'),
         ],
+        check: true,
     )
 endif
 

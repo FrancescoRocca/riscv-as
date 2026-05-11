@@ -7,7 +7,6 @@ Small assembler for our RISC-V core.
 ```bash
 $ meson setup build
 $ cd build
-$ ninja gperf
 $ meson compile
 ```
 
