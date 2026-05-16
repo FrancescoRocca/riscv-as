@@ -1,7 +1,7 @@
 project(
-    'SemiTOV-assembler',
+    'semitov-as',
     'c',
-    version: '0.1',
+    version: '0.2',
     default_options: ['warning_level=3', 'c_std=c11'],
 )
 
@@ -19,7 +19,7 @@ gperf_inc = include_directories('gperf')
 incdirs = [inc, gperf_inc]
 
 executable(
-    'assembler',
+    'semitov-as',
     sources,
     include_directories: incdirs,
 )

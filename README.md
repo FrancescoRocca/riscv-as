@@ -1,4 +1,4 @@
-# Assembler
+# semitov-as
 
 Small assembler for our RISC-V core.
 

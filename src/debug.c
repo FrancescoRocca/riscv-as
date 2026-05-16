@@ -1,4 +1,4 @@
-/*  SemiTOV-Assembler, Small RISC-V Assembler.
+/*  semitov-as, Small RISC-V Assembler.
 	Copyright (C) 2025 SemiTO-V Student Group <semitofive@gmail.com>
 
 	This program is free software: you can redistribute it and/or modify
