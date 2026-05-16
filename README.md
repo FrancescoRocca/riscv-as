@@ -1,6 +1,6 @@
-# semitov-as
+# riscv-as
 
-Small assembler for our RISC-V core.
+A tiny and simple RISC-V assembler.
 
 ## Building
 
