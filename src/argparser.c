@@ -1,4 +1,4 @@
-/*  semitov-as, Small RISC-V Assembler.
+/*  semitov-riscv-as, Small RISC-V Assembler.
 	Copyright (C) 2025 SemiTO-V Student Group <semitofive@gmail.com>
 
 	This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 const char *argp_program_version = "0.2";
-const char doc[] = "semitov-as";
+const char doc[] = "semitov-riscv-as";
 
 static struct argp_option options[] = {
 	{"compile", 'c', "FILE", 0, "Compile an assembly file", -1},

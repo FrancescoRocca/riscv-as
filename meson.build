@@ -1,5 +1,5 @@
 project(
-    'semitov-as',
+    'semitov-riscv-as',
     'c',
     version: '0.2',
     default_options: ['warning_level=3', 'c_std=c11'],
@@ -19,7 +19,7 @@ gperf_inc = include_directories('gperf')
 incdirs = [inc, gperf_inc]
 
 executable(
-    'semitov-as',
+    'semitov-riscv-as',
     sources,
     include_directories: incdirs,
 )
