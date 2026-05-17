@@ -524,7 +524,7 @@ static assembler_error encode(const instruction_s *instr, const char *lineBuf, c
 	return ASSEMBLER_OK;
 }
 
-assembler_error assemble_file(const char *filename) {
+assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_len) {
 	if (!filename) {
 		return ASSEMBLER_FILE_ERROR;
 	}
@@ -540,7 +540,7 @@ assembler_error assemble_file(const char *filename) {
 	char lineBuf[512];
 	size_t counter = 0;
 	assembler_error err = ASSEMBLER_OK;
-
+	int32_t encoded = 0;
 	while (fgets(lineBuf, sizeof(lineBuf), fp)) {
 		if (is_ignorable_line(lineBuf)) {
 			continue;
@@ -567,11 +567,14 @@ assembler_error assemble_file(const char *filename) {
 				break;
 			}
 			for (size_t i = 0; i < expansion.count; i++) {
-				int32_t encoded = 0;
 				err = encode(expansion.instructions[i], expansion.lines[i], expansion.instructions[i]->name, &encoded);
 				if (err != ASSEMBLER_OK) {
 					break;
 				}
+				uint8_t *ptr = NULL;
+				/*for(i=3, ptr = (uint8_t *) &encoded; i >= 0; i--){
+				    code[index] = ptr[i];
+								}*/
 				printf("%02lx:\t%08x\t%s", (unsigned long)counter, encoded, expansion.lines[i]);
 				counter += 4;
 			}
@@ -580,7 +583,6 @@ assembler_error assemble_file(const char *filename) {
 			}
 		} else {
 			log_msg(LOG_INFO, "fetching instruction: %s (%c TYPE)", name, instr->type);
-			int32_t encoded = 0;
 			err = encode(instr, lineBuf, name, &encoded);
 			if (err != ASSEMBLER_OK) {
 				break;

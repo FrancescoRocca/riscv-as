@@ -107,11 +107,11 @@ static void fill_shstrtab_section_header(Elf32_Shdr *section_header, size_t offs
 }
 
 assembler_error writer32(const char *filename) {
-	static const uint8_t code[] = {
-		0xb7, 0x02, 0x00, 0x10, // lui t0,0x10000
-		0x13, 0x03, 0x03, 0x03, // addi t1,x0,48
-		0x23, 0x80, 0x62, 0x00, // sb t1,0(t0)
-	};
+    static const uint8_t code[] = {
+        0x93, 0x05, 0x70, 0x00, // addi a0, x0, 7
+        0x93, 0x08, 0xd0, 0x05, // addi a7, x0, 93
+        0x73, 0x00, 0x00, 0x00  // ecall
+    };
 	static const char shstrtab[] = "\0";
 
 	const size_t code_offset = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr);

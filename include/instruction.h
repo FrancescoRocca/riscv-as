@@ -20,9 +20,13 @@
 #include "error.h"
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define REGISTER_LEN 5
 #define NAME_LEN 64
+
+#define OPCODE_LEN 4
+#define TEXT_SIZE OPCODE_LEN*512
 
 #define INT12_MAX ((1 << 11) - 1)
 #define INT12_MIN (-(1 << 11))
@@ -62,6 +66,6 @@ typedef struct instruction {
  *
  * @param filename File to assemble.
  */
-assembler_error assemble_file(const char *filename);
+assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_len);
 
 #endif

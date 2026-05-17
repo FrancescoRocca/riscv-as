@@ -25,6 +25,7 @@
 
 int main(int argc, char **argv) {
 	int exit_code = EXIT_FAILURE;
+	uint8_t code[TEXT_SIZE];
 	arguments_s *arguments = NULL;
 
 	arguments = argparse(argc, argv);
@@ -33,7 +34,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (arguments->file) {
-		assembler_error err = assemble_file(arguments->file);
+		assembler_error err = assemble_file(arguments->file, code, sizeof(code));
 		if (err != ASSEMBLER_OK) {
 			log_msg(LOG_ERROR, "assemble_file() failed: %s", assembler_error_str(err));
 			goto cleanup;
