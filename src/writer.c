@@ -16,6 +16,7 @@
 
 #include "writer.h"
 #include "debug.h"
+#include "error.h"
 
 #include <elf.h>
 #include <stddef.h>
@@ -105,7 +106,7 @@ static void fill_shstrtab_section_header(Elf32_Shdr *section_header, size_t offs
 	section_header->sh_addralign = 1;
 }
 
-int writer32(const char *filename) {
+assembler_error writer32(const char *filename) {
 	static const uint8_t code[] = {
 		0xb7, 0x02, 0x00, 0x10, // lui t0,0x10000
 		0x13, 0x03, 0x03, 0x03, // addi t1,x0,48
@@ -137,7 +138,7 @@ int writer32(const char *filename) {
 
 	FILE *fp = fopen(filename, "wb");
 	if (!fp) {
-		return -1;
+		return ASSEMBLER_ELF_ERROR;
 	}
 
 	/* Write elf file */
@@ -150,5 +151,5 @@ int writer32(const char *filename) {
 
 	fclose(fp);
 
-	return 0;
+	return ASSEMBLER_OK;
 }

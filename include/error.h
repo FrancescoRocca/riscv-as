@@ -1,0 +1,23 @@
+#ifndef ASSEMBLER_ERROR_H
+#define ASSEMBLER_ERROR_H
+
+/**
+ * @brief Custom error messages
+ */
+typedef enum assembler_error {
+	ASSEMBLER_OK,
+	ASSEMBLER_ERR,
+	ASSEMBLER_REGISTER_VALUE,
+	ASSEMBLER_JUMP_NOT_IMPLEMENTED,
+	ASSEMBLER_UNKNOWN_PSEUDO,
+	ASSEMBLER_INVALID_REGISTER,
+	ASSEMBLER_INVALID_IMMEDIATE,
+	ASSEMBLER_PARSE_ERROR,
+	ASSEMBLER_FILE_ERROR,
+	ASSEMBLER_UNKNOWN_INSTRUCTION,
+	ASSEMBLER_ELF_ERROR,
+} assembler_error;
+
+const char *assembler_error_str(assembler_error err);
+
+#endif
