@@ -27,8 +27,8 @@
  * @brief Holds the parsed CLI arguments for the assembler.
  */
 typedef struct arguments {
-	char *file; /**< Path to the source file to assemble */
-	bool elf;	/**< Produce an elf binary */
+	char *infile;  /**< Path to the source file to assemble */
+	char *outfile; /**< Path to the output file binary */
 } arguments_s;
 
 /**
