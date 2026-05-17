@@ -652,7 +652,6 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 
 		/* Copy into code */
 		/* @TODO: check if code_len is bigger than code_index */
-		log_msg(LOG_DEBUG, "encoded: %x", encoded);
 		uint8_t *ep = (uint8_t *)&encoded;
 		for (int i = 0; i < 4; ++i) {
 			code[code_index++] = ep[i];
