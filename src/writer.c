@@ -106,16 +106,11 @@ static void fill_shstrtab_section_header(Elf32_Shdr *section_header, size_t offs
 	section_header->sh_addralign = 1;
 }
 
-assembler_error writer32(const char *filename) {
-	static const uint8_t code[] = {
-		0x93, 0x05, 0x70, 0x00, // addi a0, x0, 7
-		0x93, 0x08, 0xd0, 0x05, // addi a7, x0, 93
-		0x73, 0x00, 0x00, 0x00	// ecall
-	};
+assembler_error writer32(const char *filename, uint8_t *code, size_t code_len) {
 	static const char shstrtab[] = "\0";
 
 	const size_t code_offset = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr);
-	const size_t code_end = code_offset + sizeof(code);
+	const size_t code_end = code_offset + code_len;
 	const size_t shstrtab_offset = code_end;
 	const size_t shstrtab_size = sizeof(shstrtab);
 	const size_t shoff = shstrtab_offset + shstrtab_size;
@@ -144,7 +139,7 @@ assembler_error writer32(const char *filename) {
 	/* Write elf file */
 	fwrite(&elf_header, sizeof(elf_header), 1, fp);
 	fwrite(&program_header, sizeof(program_header), 1, fp);
-	fwrite(code, sizeof(code), 1, fp);
+	fwrite(code, code_len, 1, fp);
 	fwrite(shstrtab, sizeof(shstrtab), 1, fp);
 	fwrite(&section_header, sizeof(section_header), 1, fp);
 	fwrite(&shstrtab_section_header, sizeof(shstrtab_section_header), 1, fp);

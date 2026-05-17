@@ -19,6 +19,7 @@
 #include "debug.h"
 #include "error.h"
 #include "hash.h"
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -122,7 +123,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			if (!addi) {
 				return ASSEMBLER_UNKNOWN_INSTRUCTION;
 			}
-			snprintf(line, sizeof(line), "addi %s, zero, %d\n", rd, imm32);
+			snprintf(line, sizeof(line), "addi %s, zero, %d", rd, imm32);
 			return pseudo_expansion_add(out_expansion, addi, line);
 		}
 
@@ -133,7 +134,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!lui) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "lui %s, %d\n", rd, hi_20);
+		snprintf(line, sizeof(line), "lui %s, %d", rd, hi_20);
 
 		assembler_error err = pseudo_expansion_add(out_expansion, lui, line);
 		if (err != ASSEMBLER_OK) {
@@ -145,7 +146,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			if (!addi) {
 				return ASSEMBLER_UNKNOWN_INSTRUCTION;
 			}
-			snprintf(line, sizeof(line), "addi %s, %s, %d\n", rd, rd, lo);
+			snprintf(line, sizeof(line), "addi %s, %s, %d", rd, rd, lo);
 			return pseudo_expansion_add(out_expansion, addi, line);
 		}
 
@@ -163,7 +164,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!addi) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "addi %s, %s, 0\n", rd, rs1);
+		snprintf(line, sizeof(line), "addi %s, %s, 0", rd, rs1);
 
 		return pseudo_expansion_add(out_expansion, addi, line);
 	}
@@ -179,7 +180,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!sub) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "sub %s, zero, %s\n", rd, rs1);
+		snprintf(line, sizeof(line), "sub %s, zero, %s", rd, rs1);
 
 		return pseudo_expansion_add(out_expansion, sub, line);
 	}
@@ -190,7 +191,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!addi) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "addi zero, zero, 0\n");
+		snprintf(line, sizeof(line), "addi zero, zero, 0");
 
 		return pseudo_expansion_add(out_expansion, addi, line);
 	}
@@ -206,7 +207,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!xori) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "xori %s, %s, -1\n", rd, rs1);
+		snprintf(line, sizeof(line), "xori %s, %s, -1", rd, rs1);
 
 		return pseudo_expansion_add(out_expansion, xori, line);
 	}
@@ -229,7 +230,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!sltiu) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "sltiu %s, %s, 1\n", rd, rs1);
+		snprintf(line, sizeof(line), "sltiu %s, %s, 1", rd, rs1);
 
 		return pseudo_expansion_add(out_expansion, sltiu, line);
 	}
@@ -245,7 +246,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 		if (!sltu) {
 			return ASSEMBLER_UNKNOWN_INSTRUCTION;
 		}
-		snprintf(line, sizeof(line), "sltu %s, zero, %s\n", rd, rs2);
+		snprintf(line, sizeof(line), "sltu %s, zero, %s", rd, rs2);
 
 		return pseudo_expansion_add(out_expansion, sltu, line);
 	}
@@ -576,7 +577,7 @@ static assembler_error encode(const instruction *instr, const char *lineBuf, con
 	return ASSEMBLER_OK;
 }
 
-assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_len) {
+assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_len) {
 	if (!filename) {
 		return ASSEMBLER_FILE_ERROR;
 	}
@@ -593,6 +594,8 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_l
 	size_t counter = 0;
 	assembler_error err = ASSEMBLER_OK;
 	int32_t encoded = 0;
+	size_t code_index = 0;
+
 	while (fgets(lineBuf, sizeof(lineBuf), fp)) {
 		if (is_ignorable_line(lineBuf)) {
 			continue;
@@ -628,7 +631,7 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_l
 					break;
 				}
 
-				printf("%02lx:\t%08x\t%s", (unsigned long)counter, encoded, expansion.lines[i]);
+				log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)counter, encoded, expansion.lines[i]);
 				counter += 4;
 			}
 
@@ -643,10 +646,20 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_l
 				break;
 			}
 
-			printf("%02lx:\t%08x\t%s", (unsigned long)counter, encoded, lineBuf);
+			log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)counter, encoded, lineBuf);
 			counter += 4;
 		}
+
+		/* Copy into code */
+		/* @TODO: check if code_len is bigger than code_index */
+		log_msg(LOG_DEBUG, "encoded: %x", encoded);
+		uint8_t *ep = (uint8_t *)&encoded;
+		for (int i = 0; i < 4; ++i) {
+			code[code_index++] = ep[i];
+		}
 	}
+
+	*code_len = code_index;
 
 	fclose(fp);
 	return err;

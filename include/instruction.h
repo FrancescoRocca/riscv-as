@@ -65,7 +65,9 @@ typedef struct instruction {
  * @brief Assemble the file.
  *
  * @param filename File to assemble.
+ * @param[out] code Bytes array.
+ * @param[out] code_len Array length.
  */
-assembler_error assemble_file(const char *filename, uint8_t *code, size_t code_len);
+assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_len);
 
 #endif

@@ -23,8 +23,16 @@
 
 #include "error.h"
 
-/* !!! please note that this function is only a test !!! */
-/* it will produce a simple elf32 binary that returns 0 */
-assembler_error writer32(const char *filename);
+#include <stddef.h>
+#include <stdint.h>
+
+/**
+ * @brief Produces an ELF (32 bits)
+ *
+ * @param filename Output file.
+ * @param code Bytes array.
+ * @param code_len Array length.
+ */
+assembler_error writer32(const char *filename, uint8_t *code, size_t code_len);
 
 #endif
