@@ -21,6 +21,8 @@
 #ifndef ASSEMBLER_WRITER_H
 #define ASSEMBLER_WRITER_H
 
-int writer(void);
+/* !!! please note that this function is only a test !!! */
+/* it will produce a simple elf32 binary that returns 0 */
+int writer32(const char *filename);
 
 #endif

@@ -17,6 +17,7 @@
 #include "argparser.h"
 #include "debug.h"
 #include "instruction.h"
+#include "writer.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -30,13 +31,22 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	log_msg(LOG_INFO, "compiling %s ...", arguments->file);
+	if (arguments->file) {
+		log_msg(LOG_INFO, "compiling %s ...", arguments->file);
+		ret = assemble_file(arguments->file);
+		if (ret != EXIT_SUCCESS) {
+			log_msg(LOG_ERROR, "%s", "assemble_file() failed");
+			argparse_free(arguments);
+			return EXIT_FAILURE;
+		}
+	}
 
-	ret = assemble_file(arguments->file);
-	if (ret != EXIT_SUCCESS) {
-		log_msg(LOG_ERROR, "%s", "assemble_file() failed");
-		argparse_free(arguments);
-		return EXIT_FAILURE;
+	/* Test elf binary */
+	const char *binary = "a.out";
+	log_msg(LOG_INFO, "producing elf32 binary %s...", binary);
+	ret = writer32(binary);
+	if (ret != 0) {
+		log_msg(LOG_ERROR, "%s", "writer32() failed.\n");
 	}
 
 	return EXIT_SUCCESS;
