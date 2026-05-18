@@ -36,18 +36,21 @@
 
 #define INT21_MAX ((1 << 20) - 1)
 #define INT21_MIN (-(1 << 20))
+
 /* Check if immediate is in specified boundaries */
 #define CHECK_IMMEDIATE(imm, MIN, MAX, buf)                                                                            \
 	if (imm < MIN || imm > MAX) {                                                                                      \
 		log_msg(LOG_ERROR, "Invalid immediate value: %s", buf);                                                        \
 		return ASSEMBLER_INVALID_IMMEDIATE;                                                                            \
 	}
+
 /* Check if immediate is in specified boundaries and it's last bit */
 #define CHECK_IMM_AND_LAST_B(imm, MIN, MAX, buf, instr_type)                                                           \
 	if (imm < MIN || imm > MAX || (imm_long & 0x1) != 0) {                                                             \
 		log_msg(LOG_ERROR, "Invalid %s immediate value: %s", instr_type, lineBuf);                                     \
 		return ASSEMBLER_INVALID_IMMEDIATE;                                                                            \
 	}
+
 /*
  * LUI accepts any values which can be encoded in 20 bits, so we can unify two
  * ranges to determine our MIN and MAX acceptable value:
@@ -63,6 +66,7 @@
 #define B_TYPE 'B'
 #define U_TYPE 'U'
 #define J_TYPE 'J'
+#define Z_TYPE 'Z'
 
 #define ASSEMBLE_R_TYPE(instr, rs2, rs1, rd)                                                                           \
 	(int32_t)(((uint32_t)instr->funct7 << 25) | ((uint32_t)rs2 << 20) | ((uint32_t)rs1 << 15) |                        \
@@ -87,6 +91,9 @@
 #define ASSEMBLE_J_TYPE(instr, rd, imm)                                                                                \
 	(int32_t)((((imm >> 20) & 0x1u) << 31) | (((imm >> 1) & 0x3FFu) << 21) | (((imm >> 11) & 0x1u) << 20) |            \
 			  (((imm >> 12) & 0xFFu) << 12) | ((uint32_t)rd << 7) | instr->opcode);
+
+#define ASSEMBLE_Z_TYPE(instr)                                                                                         \
+	(int32_t)(((uint32_t)instr->funct7 << 25) | ((uint32_t)instr->funct3 << 12) | instr->opcode);
 
 typedef struct instruction {
 	char *name;

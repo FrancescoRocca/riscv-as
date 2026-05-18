@@ -616,6 +616,13 @@ static assembler_error encode(const instruction *instr, const char *lineBuf, con
 			}
 			log_msg(LOG_DEBUG, "Write: %08x", res);
 			break;
+		case Z_TYPE:
+			/* This is a special case for ecall/ebreak, in the reference card
+			 * they are in the I type but without operands, so we made a new type (Z)
+			 */
+			res = ASSEMBLE_Z_TYPE(instr);
+			log_msg(LOG_DEBUG, "Write: %08x", res);
+			break;
 		default:
 			log_msg(LOG_ERROR, "Unknown instruction type: %c", instr->type);
 
@@ -711,10 +718,10 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 
 		/* Copy into code */
 		/* @TODO: check if code_len is bigger than code_index */
-		/*uint8_t *ep = (uint8_t *)&encoded;
+		uint8_t *ep = (uint8_t *)&encoded;
 		for (int i = 0; i < 4; ++i) {
 			code[code_index++] = ep[i];
-			}*/
+		}
 	}
 
 	*code_len = code_index;
