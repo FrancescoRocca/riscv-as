@@ -12,10 +12,13 @@ $ meson compile
 
 ## Testing
 
-If you would like to test the assembled file, you can do it using [spike](https://github.com/riscv-software-src/riscv-isa-sim) and [pk](https://github.com/riscv-software-src/riscv-pk).
+If you want to test the generated binaries with [spike](https://github.com/riscv-software-src/riscv-isa-sim) and/or [pk](https://github.com/riscv-software-src/riscv-pk), you need a RISC-V toolchain.
 
-**Note**: compile spike and pk to support 32 bits versions. They require the [riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain) with multilib enabled.
+- Recommended: prebuilt [riscv-gnu-toolchain-builds](https://github.com/FrancescoRocca/riscv-gnu-toolchain-builds).
+- Alternative: build the [riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain) yourself with multilib enabled.
+
+> **Note**: `spike` and `pk` should be built for 32-bit targets and should support RVC.
 
 ## Contributing
 
-Remember to format the code before making any contribute. Just run `ninja format` inside the `build/` folder.
+Please format the code before submitting any contribution. Run `ninja format` inside the `build/` folder.
