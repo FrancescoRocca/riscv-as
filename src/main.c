@@ -49,8 +49,15 @@ int main(int argc, char **argv) {
 		print_code(code, code_len);
 	}
 
-	if (arguments->outfile && code_len) {
-		const char *filename = "a.out";
+	if (code_len) {
+		char *filename = NULL;
+
+		if (arguments->outfile) {
+			filename = arguments->outfile;
+		} else {
+			filename = "a.out";
+		}
+
 		assembler_error err = writer32(filename, code, code_len);
 		if (err != ASSEMBLER_OK) {
 			log_msg(LOG_ERROR, "writer32() failed: %s", assembler_error_str(err));
