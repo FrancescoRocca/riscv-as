@@ -28,6 +28,8 @@
 #define OPCODE_LEN 4
 #define TEXT_SIZE OPCODE_LEN * 512
 
+#define LINE_BUF_LEN 512
+
 #define INT12_MAX ((1 << 11) - 1)
 #define INT12_MIN (-(1 << 11))
 

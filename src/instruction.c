@@ -29,7 +29,7 @@
 
 typedef struct pseudo_expansion {
 	const instruction *instructions[2];
-	char lines[2][512];
+	char lines[2][LINE_BUF_LEN];
 	size_t count;
 } pseudo_expansion;
 
@@ -198,7 +198,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 	char rd[REGISTER_LEN] = {0};
 	char rs1[REGISTER_LEN] = {0};
 	char rs2[REGISTER_LEN] = {0};
-	char line[512] = {0};
+	char line[LINE_BUF_LEN] = {0};
 	int64_t imm64 = 0x0;
 
 	if (strcmp(instr->name, "li") == 0) {
@@ -209,7 +209,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 
 		CHECK_IMMEDIATE(imm64, INT32_MIN, INT32_MAX, lineBuf);
 
-		return expand_li_instr(rd, imm64, line, 512, out_expansion);
+		return expand_li_instr(rd, imm64, line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "mv") == 0) {
@@ -218,7 +218,7 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			return ASSEMBLER_PARSE_ERROR;
 		}
 
-		return expand_mv_instr(rs1, rd, line, 512, out_expansion);
+		return expand_mv_instr(rs1, rd, line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "neg") == 0) {
@@ -226,12 +226,12 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			log_msg(LOG_ERROR, "Failed to parse neg: %s", lineBuf);
 			return ASSEMBLER_PARSE_ERROR;
 		}
-		return expand_neg_instr(rs1, rd, line, 512, out_expansion);
+		return expand_neg_instr(rs1, rd, line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "nop") == 0) {
 		/* nop is implemented with 'addi x0, x0, 0' */
-		return expand_nop_instr(line, 512, out_expansion);
+		return expand_nop_instr(line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "not") == 0) {
@@ -239,7 +239,8 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			log_msg(LOG_ERROR, "Failed to parse not: %s", lineBuf);
 			return ASSEMBLER_PARSE_ERROR;
 		}
-		return expand_not_instr(rs1, rd, line, 512, out_expansion);
+
+		return expand_not_instr(rs1, rd, line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "ret") == 0) {
@@ -254,7 +255,8 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			log_msg(LOG_ERROR, "Failed to parse seqz: %s", lineBuf);
 			return ASSEMBLER_PARSE_ERROR;
 		}
-		return expand_seqz_instr(rs1, rd, line, 512, out_expansion);
+
+		return expand_seqz_instr(rs1, rd, line, LINE_BUF_LEN, out_expansion);
 	}
 
 	if (strcmp(instr->name, "snez") == 0) {
@@ -262,8 +264,10 @@ static assembler_error expand_pseudo_instr(const instruction *instr, const char 
 			log_msg(LOG_ERROR, "Failed to parse snez: %s", lineBuf);
 			return ASSEMBLER_PARSE_ERROR;
 		}
-		return expand_snez_instr(rs2, rd, line, 512, out_expansion);
+
+		return expand_snez_instr(rs2, rd, line, LINE_BUF_LEN, out_expansion);
 	}
+
 	log_msg(LOG_ERROR, "Unknown pseudo-instruction: %s", instr->name);
 
 	return ASSEMBLER_UNKNOWN_PSEUDO;
@@ -635,7 +639,6 @@ static assembler_error encode(const instruction *instr, const char *lineBuf, con
 }
 static assembler_error encode_pseudo_instr(pseudo_expansion expansion, int32_t *encoded, size_t *counter) {
 	assembler_error err = ASSEMBLER_OK;
-	// TODO check i < encoded arr size
 	size_t i;
 	for (i = 0; i < expansion.count; i++) {
 		err = encode(expansion.instructions[i], expansion.lines[i], expansion.instructions[i]->name, &encoded[i]);
@@ -643,11 +646,9 @@ static assembler_error encode_pseudo_instr(pseudo_expansion expansion, int32_t *
 			break;
 		}
 
-		log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)*counter, encoded, expansion.lines[i]);
+		log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)*counter, encoded[i], expansion.lines[i]);
 		*counter += 4;
 	}
-	/* Last element is 0 as a string terminator */
-	encoded[i] = 0;
 	return err;
 }
 assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_len) {
@@ -663,11 +664,10 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 
 	char name[NAME_LEN] = {0};
 	const instruction *instr = NULL;
-	char lineBuf[512];
+	char lineBuf[LINE_BUF_LEN];
 	size_t counter = 0;
 	assembler_error err = ASSEMBLER_OK;
-	// int32_t encoded = 0;
-	int32_t encoded[4];
+	int32_t encoded[2] = {0};
 	size_t code_index = 0;
 
 	while (fgets(lineBuf, sizeof(lineBuf), fp)) {
@@ -688,10 +688,11 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 			break;
 		}
 
+		size_t instructions_to_copy = 0;
+		memset(encoded, 0, sizeof(encoded));
+
 		if (instr->type == 'P') {
 			log_msg(LOG_INFO, "expanding pseudo-instruction: %s", name);
-			/* In RV32I some pseudo-instructions could require two actual
-			   instructions to be correctly executed */
 			pseudo_expansion expansion;
 
 			err = expand_pseudo_instr(instr, lineBuf, &expansion);
@@ -700,10 +701,10 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 			}
 
 			err = encode_pseudo_instr(expansion, encoded, &counter);
-
 			if (err != ASSEMBLER_OK) {
 				break;
 			}
+			instructions_to_copy = expansion.count;
 		} else {
 			log_msg(LOG_INFO, "fetching instruction: %s (%c TYPE)", name, instr->type);
 
@@ -712,15 +713,25 @@ assembler_error assemble_file(const char *filename, uint8_t *code, size_t *code_
 				break;
 			}
 
-			log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)counter, &encoded[0], lineBuf);
+			log_msg(LOG_DEBUG, "%02lx:\t%08x\t%s", (unsigned long)counter, encoded[0], lineBuf);
 			counter += 4;
+			instructions_to_copy = 1;
 		}
 
-		/* Copy into code */
-		/* @TODO: check if code_len is bigger than code_index */
-		uint8_t *ep = (uint8_t *)&encoded;
-		for (int i = 0; i < 4; ++i) {
+		uint8_t *ep = (uint8_t *)encoded;
+		size_t total_bytes = instructions_to_copy * 4;
+
+		for (size_t i = 0; i < total_bytes; ++i) {
+			if (code_index >= TEXT_SIZE) {
+				err = ASSEMBLER_ERR;
+				break;
+			}
+
 			code[code_index++] = ep[i];
+		}
+
+		if (err != ASSEMBLER_OK) {
+			break;
 		}
 	}
 
