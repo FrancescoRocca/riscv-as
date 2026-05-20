@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "error.h"
 #include "instruction.h"
+#include "writer.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,15 +29,35 @@ int main(int argc, char **argv) {
 
 	arguments = argparse(argc, argv);
 	if (!arguments) {
-		return EXIT_FAILURE;
+		return exit_code;
 	}
 
-	log_msg(LOG_INFO, "compiling %s ...", arguments->file);
+	uint8_t code[TEXT_SIZE] = {0};
+	size_t code_len = 0;
+	if (arguments->infile) {
+		assembler_error err = assemble_file(arguments->infile, code, &code_len);
+		if (err != ASSEMBLER_OK) {
+			log_msg(LOG_ERROR, "assemble_file() failed: %s", assembler_error_str(err));
+			goto cleanup;
+		}
 
-	assembler_error err = assemble_file(arguments->file);
-	if (err != ASSEMBLER_OK) {
-		log_msg(LOG_ERROR, "assemble_file() failed: %s", assembler_error_str(err));
-		goto cleanup;
+		log_msg(LOG_DEBUG, "Code len: %ld", code_len);
+	}
+
+	if (code_len) {
+		char *filename = NULL;
+
+		if (arguments->outfile) {
+			filename = arguments->outfile;
+		} else {
+			filename = "a.out";
+		}
+
+		assembler_error err = writer32(filename, code, code_len, arguments->base_vaddr);
+		if (err != ASSEMBLER_OK) {
+			log_msg(LOG_ERROR, "writer32() failed: %s", assembler_error_str(err));
+			goto cleanup;
+		}
 	}
 
 	exit_code = EXIT_SUCCESS;
